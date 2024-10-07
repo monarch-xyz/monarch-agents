@@ -32,7 +32,7 @@ jobs:
         id: slither
         with:
           slither-config: "slither.config.json"
-          solc-version: 0.8.27
+          solc-version: 0.8.19
           sarif: results.sarif
           fail-on: none
 
