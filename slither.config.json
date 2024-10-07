@@ -1,0 +1,9 @@
+{
+  "detectors_to_exclude": "timestamp,naming-convention,pragma,solc-version,uninitialized-local",
+  "filter_paths": "lib,test",
+  "exclude_informational": true,
+  "exclude_low": true,
+  "solc_remaps": [
+    "morpho-blue=lib/morpho-blue"
+  ]
+}
