@@ -14,6 +14,5 @@ Breakdown the progress of the PR for everyone to see what else you intend to inc
 Ensure you completed all of the steps below before submitting your pull request:
 
 - [ ] Add natspec for all functions / parameters
-- [ ] Ran `forge snapshot`
 - [ ] Ran `forge fmt`
 - [ ] Ran `forge test`
