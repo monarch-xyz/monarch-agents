@@ -3,4 +3,15 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+solc_version = '0.8.27'
+optimizer = true
+optimizer_runs = 10000
+
+gas_reports = [
+  # "*",
+]
+
+[fmt]
+line_length=130
+tab_width=4
+func_attrs_with_params_multiline=true

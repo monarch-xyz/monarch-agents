@@ -1,0 +1,24 @@
+name: Gas Comparison
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  pull-requests: write
+  contents: read
+  
+
+jobs:
+  gas_comparison:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Gas Comparison
+        uses: antoncoding/gas-diff-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base_ref: ${{ github.base_ref }}
+          head_ref: ${{ github.head_ref }}
