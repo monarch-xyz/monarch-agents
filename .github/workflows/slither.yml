@@ -1,11 +1,16 @@
 name: Slither Analysis
 
-# temporarily disabled because of the action bug
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+
+# Add this permissions block
+permissions:
+  contents: read
+  security-events: write
+  issues: write
 
 jobs:
   analyze-core:
@@ -22,7 +27,7 @@ jobs:
         run: forge install
         
       - name: Run Slither core
-        uses: crytic/slither-action@v0.3.0
+        uses: crytic/slither-action@v0.4.0
         continue-on-error: true
         id: slither
         with:

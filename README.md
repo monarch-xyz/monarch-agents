@@ -1,17 +1,21 @@
-## Foundry
+<div align="center">
+  <h1 > Monarch Agents</h1>
+  
+  <img height=60 src="./docs/logo.png"/>
+  <br/>
+  <br/>
+  <a href="https://github.com/foundry-rs/foundry"><img src="https://img.shields.io/static/v1?label=foundry-rs&message=foundry&color=blue&logo=github"/></a>
+  <a href=https://github.com/monarch-xyz/monarch-agents/actions/workflows/slither.yml""><img src="https://github.com/monarch-xyz/monarch-agents/actions/workflows/slither.yml/badge.svg?branch=master" > </a>
+  <a href=https://github.com/monarch-xyz/monarch-agents/actions/workflows/ci.yml""><img src="https://github.com/monarch-xyz/monarch-agents/actions/workflows/ci.yml/badge.svg?branch=master"> </a>
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
-
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+  <a href="https://codecov.io/gh/monarch-xyz/monarch-agents" >
+<img src="https://codecov.io/gh/monarch-xyz/monarch-agents/graph/badge.svg?token=NPTETDZ4K2"/>
+</a>
+  <h5 align="center"> Automation for Morpho Blue</h5>
+  
+</div>
 
 ## Documentation
-
-https://book.getfoundry.sh/
 
 ## Usage
 
@@ -31,36 +35,4 @@ $ forge test
 
 ```shell
 $ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
 ```
