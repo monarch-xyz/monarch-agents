@@ -6,6 +6,11 @@ on:
       - opened
       - synchronize
 
+permissions:
+  pull-requests: write
+  contents: read
+  
+
 jobs:
   gas_comparison:
     runs-on: ubuntu-latest
