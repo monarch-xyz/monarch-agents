@@ -1,1 +1,2 @@
 morpho-blue=lib/morpho-blue
+solmate/=lib/solmate/
