@@ -58,7 +58,7 @@ contract MonarchAgentV1 is IMonarchAgent {
     }
 
     /**
-     * @notice Rebalances the user's position from one market to another
+     * @notice Rebalances the user's position from one set of markets to another
      * @param onBehalf The user to rebalance the position for
      * @param token The token to rebalance
      * @param fromMarkets The markets to withdraw assets from
@@ -70,23 +70,23 @@ contract MonarchAgentV1 is IMonarchAgent {
         RebalanceMarketParams[] calldata fromMarkets,
         RebalanceMarketParams[] calldata toMarkets
     ) external payable onlyRebalancer(onBehalf) {
-        require(onBehalf == msg.sender || morphoBlue.isAuthorized(onBehalf, address(this)), ErrorsLib.AGENT_NOT_AUTHORIZED);
-        require(fromMarkets.length > 0, ErrorsLib.ZERO_MARKET);
-        require(toMarkets.length > 0, ErrorsLib.ZERO_MARKET);
+        require(fromMarkets.length > 0 && toMarkets.length > 0, ErrorsLib.ZERO_MARKET);
 
         int256 tokenDelta;
 
         for (uint256 i; i < fromMarkets.length; ++i) {
             require(fromMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
             (uint256 assetsWithdrawn,) =
-                morphoBlue.withdraw(fromMarkets[i].market, fromMarkets[i].assets, 0, onBehalf, address(this));
+                morphoBlue.withdraw(fromMarkets[i].market, fromMarkets[i].assets, fromMarkets[i].shares, onBehalf, address(this));
             tokenDelta += int256(assetsWithdrawn);
         }
 
+        _approveMaxTo(token, address(morphoBlue));
+
         for (uint256 i; i < toMarkets.length; ++i) {
             require(toMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
-            _approveMaxTo(toMarkets[i].market.loanToken, address(morphoBlue));
-            (uint256 assetsSupplied,) = morphoBlue.supply(toMarkets[i].market, toMarkets[i].assets, 0, onBehalf, bytes(""));
+            (uint256 assetsSupplied,) =
+                morphoBlue.supply(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf, bytes(""));
             tokenDelta -= int256(assetsSupplied);
         }
 

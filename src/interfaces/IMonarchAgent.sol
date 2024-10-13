@@ -6,6 +6,7 @@ import {MarketParams} from "morpho-blue/src/interfaces/IMorpho.sol";
 struct RebalanceMarketParams {
     MarketParams market;
     uint256 assets;
+    uint256 shares;
 }
 
 interface IMonarchAgent {
