@@ -114,7 +114,7 @@ contract AgentTest is BaseTest {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceInvalidToken(uint256 totalSupplyAmount) public {
+    function testRebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
         address user = address(0x1);
         address rebalancer = address(0x2);
 
@@ -136,18 +136,40 @@ contract AgentTest is BaseTest {
         vm.stopPrank();
 
         vm.prank(rebalancer);
-        RebalanceMarketParams[] memory invalid_from_markets = new RebalanceMarketParams[](1);
-        invalid_from_markets[0] = from_markets[0];
-        invalid_from_markets[0].market.loanToken = address(collateralToken);
+        for (uint256 i; i < from_markets.length; ++i) {
+            from_markets[i].market.loanToken = address(collateralToken);
+        }
         vm.expectRevert(bytes(ErrorsLib.INVALID_TOKEN));
-        agent.rebalance(user, address(loanToken), invalid_from_markets, to_markets);
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
+    function testRebalanceToMarketInvalidToken(uint256 totalSupplyAmount) public {
+        address user = address(0x1);
+        address rebalancer = address(0x2);
+
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
+        loanToken.setBalance(user, totalSupplyAmount);
+
+        uint256 withdrawAmount = totalSupplyAmount;
+        uint256 supplyAmount = totalSupplyAmount;
+
+        (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
+            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+
+        _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
+
+        _setAuthorization(user, address(agent), true);
+
+        vm.startPrank(user);
+        agent.authorize(rebalancer);
+        vm.stopPrank();
 
         vm.prank(rebalancer);
-        RebalanceMarketParams[] memory invalid_to_markets = new RebalanceMarketParams[](1);
-        invalid_to_markets[0] = to_markets[0];
-        invalid_to_markets[0].market.loanToken = address(collateralToken);
+        for (uint256 i; i < to_markets.length; ++i) {
+            to_markets[i].market.loanToken = address(collateralToken);
+        }
         vm.expectRevert(bytes(ErrorsLib.INVALID_TOKEN));
-        agent.rebalance(user, address(loanToken), from_markets, invalid_to_markets);
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
     function testRebalanceZeroMarket(uint256 totalSupplyAmount) public {
