@@ -14,6 +14,9 @@ contract AgentRebalanceTest is AgentTestBase {
     address immutable user = address(0x1);
     address immutable rebalancer = address(0x2);
 
+    uint256 constant lltv_90 = 0.9e18;
+    uint256 constant lltv_80 = 0.8e18;
+
     function setUp() public override {
         super.setUp();
     }
@@ -52,7 +55,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -76,7 +79,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -102,7 +105,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -128,7 +131,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets,) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -152,7 +155,7 @@ contract AgentRebalanceTest is AgentTestBase {
         supplyAmount = bound(supplyAmount, 1, withdrawAmount - 1);
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -175,7 +178,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, 0, withdrawShares, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, 0, withdrawShares, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -200,7 +203,7 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParams(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
@@ -225,10 +228,10 @@ contract AgentRebalanceTest is AgentTestBase {
         supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
         uint256 supplyAmount2 = totalSupplyAmount - supplyAmount1;
 
-        MarketParams memory market1 = _createAndEnableMarket(user, 0.09e18);
-        MarketParams memory market2 = _createAndEnableMarket(user, 0.08e18);
-        MarketParams memory market3 = _createAndEnableMarket(user,0.085e18);
-        MarketParams memory market4 = _createAndEnableMarket(user,0.07e18);
+        MarketParams memory market1 = _createAndEnableMarket(user, 0.9e18);
+        MarketParams memory market2 = _createAndEnableMarket(user, 0.8e18);
+        MarketParams memory market3 = _createAndEnableMarket(user,0.85e18);
+        MarketParams memory market4 = _createAndEnableMarket(user,0.7e18);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](2);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](2);
