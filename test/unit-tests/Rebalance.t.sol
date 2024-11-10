@@ -25,8 +25,8 @@ contract AgentRebalanceTest is AgentTestBase {
         uint256 supplyAmount,
         uint256 supplyShares
     ) internal returns (RebalanceMarketParams[] memory, RebalanceMarketParams[] memory) {
-        MarketParams memory market1 = _createMarket(lltv1);
-        MarketParams memory market2 = _createMarket(lltv2);
+        MarketParams memory market1 = _createAndEnableMarket(user, lltv1);
+        MarketParams memory market2 = _createAndEnableMarket(user, lltv2);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](1);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](1);
@@ -225,10 +225,10 @@ contract AgentRebalanceTest is AgentTestBase {
         supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
         uint256 supplyAmount2 = totalSupplyAmount - supplyAmount1;
 
-        MarketParams memory market1 = _createMarket(0.09 ether);
-        MarketParams memory market2 = _createMarket(0.08 ether);
-        MarketParams memory market3 = _createMarket(0.085 ether);
-        MarketParams memory market4 = _createMarket(0.07 ether);
+        MarketParams memory market1 = _createAndEnableMarket(user, 0.09e18);
+        MarketParams memory market2 = _createAndEnableMarket(user, 0.08e18);
+        MarketParams memory market3 = _createAndEnableMarket(user,0.085e18);
+        MarketParams memory market4 = _createAndEnableMarket(user,0.07e18);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](2);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](2);

@@ -62,7 +62,7 @@ contract MonarchAgentV1 is IMonarchAgent {
         emit RebalancerSet(msg.sender, address(0));
     }
 
-    function batchSetMarkets(bytes32[] calldata marketIds, bool enabled) external {
+    function batchEnableMarkets(bytes32[] calldata marketIds, bool enabled) external {
         for (uint256 i; i < marketIds.length; i++) {
             marketEnabled[msg.sender][marketIds[i]] = enabled;
         }
