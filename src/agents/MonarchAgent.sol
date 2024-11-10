@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import {IMonarchAgent, RebalanceMarketParams} from "../interfaces/IMonarchAgent.sol";
 import {IMorpho, Id, MarketParams} from "morpho-blue/src/interfaces/IMorpho.sol";
-import { MarketParamsLib } from "morpho-blue/src/libraries/MarketParamsLib.sol";
+import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 
@@ -24,7 +24,7 @@ contract MonarchAgentV1 is IMonarchAgent {
     mapping(address user => address rebalancer) public rebalancers;
 
     /// @notice rebalancers can only rebalance to enabled market
-    mapping(address user => mapping(bytes32 marketId => bool )) marketEnabled;
+    mapping(address user => mapping(bytes32 marketId => bool)) marketEnabled;
 
     /* CONSTRUCTOR */
 

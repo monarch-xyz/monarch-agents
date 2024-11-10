@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import { AgentTestBase } from "test/shared/AgentTestBase.t.sol";
+import {AgentTestBase} from "test/shared/AgentTestBase.t.sol";
 
 contract AgentAuthorizeTest is AgentTestBase {
     function setUp() public override {

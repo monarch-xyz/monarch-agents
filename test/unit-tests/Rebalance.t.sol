@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import {MonarchAgentV1} from "../../src/agents/MonarchAgent.sol";
-import {BaseTest} from "morpho-blue/test/forge/BaseTest.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {MarketParams, RebalanceMarketParams} from "../../src/interfaces/IMonarchAgent.sol";
 import {ErrorsLib} from "../../src/libraries/ErrorsLib.sol";
-import { AgentTestBase } from "test/shared/AgentTestBase.t.sol";
+import {AgentTestBase} from "test/shared/AgentTestBase.t.sol";
 
 contract AgentRebalanceTest is AgentTestBase {
     using MarketParamsLib for MarketParams;
@@ -72,7 +70,6 @@ contract AgentRebalanceTest is AgentTestBase {
     }
 
     function testRebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
-        
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -83,7 +80,6 @@ contract AgentRebalanceTest is AgentTestBase {
             _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
 
         vm.prank(rebalancer);
         for (uint256 i; i < from_markets.length; ++i) {
@@ -104,7 +100,6 @@ contract AgentRebalanceTest is AgentTestBase {
             _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
 
         vm.prank(rebalancer);
         for (uint256 i; i < to_markets.length; ++i) {
@@ -197,8 +192,8 @@ contract AgentRebalanceTest is AgentTestBase {
 
         MarketParams memory market1 = _createAndEnableMarket(user, 0.9e18);
         MarketParams memory market2 = _createAndEnableMarket(user, 0.8e18);
-        MarketParams memory market3 = _createAndEnableMarket(user,0.85e18);
-        MarketParams memory market4 = _createAndEnableMarket(user,0.7e18);
+        MarketParams memory market3 = _createAndEnableMarket(user, 0.85e18);
+        MarketParams memory market4 = _createAndEnableMarket(user, 0.7e18);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](2);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](2);
