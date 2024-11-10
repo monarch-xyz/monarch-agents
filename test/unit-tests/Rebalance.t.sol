@@ -19,7 +19,14 @@ contract AgentRebalanceTest is AgentTestBase {
 
     function setUp() public override {
         super.setUp();
+
+        // all tests here assume already authorizing rebalancer
+        _setMorphoAuthorization(user, address(agent), true);
+
+        // authorize rebalancer at the agent level for rebalancing
+        _authorizeRebalancer(user, rebalancer);
     }
+
     function _prepareRebalanceMarketParams(
         uint256 lltv1,
         uint256 lltv2,
@@ -59,12 +66,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
-
         vm.prank(unauthorized);
         vm.expectRevert(bytes(ErrorsLib.UNAUTHORIZED_REBALANCER));
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
@@ -83,11 +84,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         for (uint256 i; i < from_markets.length; ++i) {
@@ -109,11 +105,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         for (uint256 i; i < to_markets.length; ++i) {
@@ -135,12 +126,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
-
         vm.prank(rebalancer);
         vm.expectRevert(bytes(ErrorsLib.ZERO_MARKET));
         RebalanceMarketParams[] memory empty;
@@ -158,12 +143,6 @@ contract AgentRebalanceTest is AgentTestBase {
             _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         vm.expectRevert(bytes(ErrorsLib.DELTA_NON_ZERO));
@@ -185,12 +164,6 @@ contract AgentRebalanceTest is AgentTestBase {
         withdrawShares = morpho.position(from_markets[0].market.id(), user).supplyShares;
         from_markets[0].shares = withdrawShares;
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
-
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
@@ -206,12 +179,6 @@ contract AgentRebalanceTest is AgentTestBase {
             _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
@@ -243,12 +210,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         _supplyMorpho(market1, withdrawAmount1, 0, user);
         _supplyMorpho(market2, withdrawAmount2, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);

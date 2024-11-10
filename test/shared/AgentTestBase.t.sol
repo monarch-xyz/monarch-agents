@@ -47,9 +47,15 @@ contract AgentTestBase is BaseTest {
         vm.stopPrank();
     }
 
-    function _setAuthorization(address user, address authorized, bool newIsAuthorized) internal {
+    function _setMorphoAuthorization(address user, address authorized, bool newIsAuthorized) internal {
         vm.startPrank(user);
         morpho.setAuthorization(authorized, newIsAuthorized);
+        vm.stopPrank();
+    }
+
+    function _authorizeRebalancer(address user, address rebalancer) internal {
+        vm.startPrank(user);
+        agent.authorize(rebalancer);
         vm.stopPrank();
     }
 
