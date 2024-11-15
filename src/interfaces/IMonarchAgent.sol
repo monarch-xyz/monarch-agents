@@ -10,7 +10,6 @@ struct RebalanceMarketParams {
 }
 
 interface IMonarchAgent {
-    
     event RebalancerSet(address indexed user, address indexed rebalancer);
 
     event MarketEnabled(address indexed user, bytes32 indexed marketId, bool enabled);

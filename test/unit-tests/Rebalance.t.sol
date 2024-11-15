@@ -44,13 +44,13 @@ contract AgentRebalanceTest is AgentTestBase {
         return (from_markets, to_markets);
     }
 
-    function testMorphoZeroAddress() public {
+    function test_MorphoZeroAddress() public {
         address fakeMorpho = address(0);
         vm.expectRevert(bytes(ErrorsLib.ZERO_ADDRESS));
         _setUpAgent(fakeMorpho);
     }
 
-    function testRebalanceUnAuthorizedRebalancer(uint256 totalSupplyAmount) public {
+    function test_RebalanceUnAuthorizedRebalancer(uint256 totalSupplyAmount) public {
         address unauthorized = address(0x3);
 
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
@@ -69,7 +69,7 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
+    function test_RevertIf_RebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -89,7 +89,7 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceToMarketInvalidToken(uint256 totalSupplyAmount) public {
+    function test_RevertIf_RebalanceToMarketInvalidToken(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -109,7 +109,29 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceZeroMarket(uint256 totalSupplyAmount) public {
+    function test_RevertIf_RebalanceToNewMarket(uint256 totalSupplyAmount) public {
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
+        loanToken.setBalance(user, totalSupplyAmount);
+
+        uint256 withdrawAmount = totalSupplyAmount;
+        uint256 supplyAmount = totalSupplyAmount;
+
+        (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
+
+        // swap the toMarket to an unauthorized market
+        MarketParams memory lltv_99 = _createMarket(0.99e18);
+        to_markets[0] = RebalanceMarketParams(lltv_99, supplyAmount, 0);
+
+        _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
+
+        vm.prank(rebalancer);
+
+        vm.expectRevert(bytes(ErrorsLib.NOT_ENABLED));
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
+    function test_RevertIf_RebalanceZeroMarket(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -127,7 +149,7 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), empty, empty);
     }
 
-    function testRebalanceDeltaNonZero(uint256 totalSupplyAmount, uint256 supplyAmount) public {
+    function test_RevertIf_RebalanceDeltaNonZero(uint256 totalSupplyAmount, uint256 supplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -144,7 +166,7 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceByShares(uint256 totalSupplyAmount) public {
+    function test_RebalanceByShares(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -179,7 +201,7 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceMultipleMarkets(uint256 totalSupplyAmount) public {
+    function test_RebalanceMultipleMarkets(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
