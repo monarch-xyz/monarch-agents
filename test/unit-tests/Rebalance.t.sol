@@ -1,46 +1,31 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-import {Test, console} from "forge-std/Test.sol";
-import {MonarchAgentV1} from "../../src/agents/MonarchAgent.sol";
-import {BaseTest} from "morpho-blue/test/forge/BaseTest.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {MarketParams, RebalanceMarketParams} from "../../src/interfaces/IMonarchAgent.sol";
 import {ErrorsLib} from "../../src/libraries/ErrorsLib.sol";
+import {AgentTestBase} from "test/shared/AgentTestBase.t.sol";
 
-contract AgentTest is BaseTest {
+contract AgentRebalanceTest is AgentTestBase {
     using MarketParamsLib for MarketParams;
 
-    MonarchAgentV1 public agent;
+    address immutable user = address(0x1);
+    address immutable rebalancer = address(0x2);
+
+    uint256 constant lltv_90 = 0.9e18;
+    uint256 constant lltv_80 = 0.8e18;
 
     function setUp() public override {
         super.setUp();
-        _setUpAgent(address(morpho));
+
+        // all tests here assume already authorizing rebalancer
+        _setMorphoAuthorization(user, address(agent), true);
+
+        // authorize rebalancer at the agent level for rebalancing
+        _authorizeRebalancer(user, rebalancer);
     }
 
-    function test_SetRebalancer() public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
-        vm.prank(user);
-        agent.authorize(rebalancer);
-
-        assertEq(agent.rebalancers(user), rebalancer);
-    }
-
-    function test_RevokeRebalancer() public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        agent.revoke();
-
-        vm.stopPrank();
-        assertEq(agent.rebalancers(user), address(0));
-    }
-
-    function _prepareRebalanceMarketParms(
+    function _prepareRebalanceMarketParams(
         uint256 lltv1,
         uint256 lltv2,
         uint256 withdrawAmount,
@@ -48,8 +33,8 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount,
         uint256 supplyShares
     ) internal returns (RebalanceMarketParams[] memory, RebalanceMarketParams[] memory) {
-        MarketParams memory market1 = _createMarket(lltv1);
-        MarketParams memory market2 = _createMarket(lltv2);
+        MarketParams memory market1 = _createAndEnableMarket(user, lltv1);
+        MarketParams memory market2 = _createAndEnableMarket(user, lltv2);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](1);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](1);
@@ -59,37 +44,13 @@ contract AgentTest is BaseTest {
         return (from_markets, to_markets);
     }
 
-    function _createMarket(uint256 lltv) internal returns (MarketParams memory) {
-        _setLltv(lltv);
-        return MarketParams(address(loanToken), address(collateralToken), address(oracle), address(irm), lltv);
-    }
-
-    function _supplyMorpho(MarketParams memory market, uint256 assets, uint256 shares, address user) internal {
-        vm.startPrank(user);
-        loanToken.approve(address(morpho), type(uint256).max);
-        morpho.supply(market, assets, shares, user, hex"");
-        vm.stopPrank();
-    }
-
-    function _setAuthorization(address user, address authorized, bool newIsAuthorized) internal {
-        vm.startPrank(user);
-        morpho.setAuthorization(authorized, newIsAuthorized);
-        vm.stopPrank();
-    }
-
-    function _setUpAgent(address morphoBlue) internal {
-        agent = new MonarchAgentV1(morphoBlue);
-    }
-
-    function testMorphoZeroAddress() public {
+    function test_MorphoZeroAddress() public {
         address fakeMorpho = address(0);
         vm.expectRevert(bytes(ErrorsLib.ZERO_ADDRESS));
         _setUpAgent(fakeMorpho);
     }
 
-    function testRebalanceUnAuthorizedRebalancer(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
+    function test_RebalanceUnAuthorizedRebalancer(uint256 totalSupplyAmount) public {
         address unauthorized = address(0x3);
 
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
@@ -99,25 +60,16 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(unauthorized);
         vm.expectRevert(bytes(ErrorsLib.UNAUTHORIZED_REBALANCER));
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
+    function test_RevertIf_RebalanceFromMarketInvalidToken(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -125,15 +77,9 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         for (uint256 i; i < from_markets.length; ++i) {
@@ -143,10 +89,7 @@ contract AgentTest is BaseTest {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceToMarketInvalidToken(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
+    function test_RevertIf_RebalanceToMarketInvalidToken(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -154,15 +97,9 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         for (uint256 i; i < to_markets.length; ++i) {
@@ -172,10 +109,29 @@ contract AgentTest is BaseTest {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceZeroMarket(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
+    function test_RevertIf_RebalanceToNewMarket(uint256 totalSupplyAmount) public {
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
+        loanToken.setBalance(user, totalSupplyAmount);
 
+        uint256 withdrawAmount = totalSupplyAmount;
+        uint256 supplyAmount = totalSupplyAmount;
+
+        (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
+
+        // swap the toMarket to an unauthorized market
+        MarketParams memory lltv_99 = _createMarket(0.99e18);
+        to_markets[0] = RebalanceMarketParams(lltv_99, supplyAmount, 0);
+
+        _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
+
+        vm.prank(rebalancer);
+
+        vm.expectRevert(bytes(ErrorsLib.NOT_ENABLED));
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
+    function test_RevertIf_RebalanceZeroMarket(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -183,15 +139,9 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets,) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         vm.expectRevert(bytes(ErrorsLib.ZERO_MARKET));
@@ -199,10 +149,7 @@ contract AgentTest is BaseTest {
         agent.rebalance(user, address(loanToken), empty, empty);
     }
 
-    function testRebalanceDeltaNonZero(uint256 totalSupplyAmount, uint256 supplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
+    function test_RevertIf_RebalanceDeltaNonZero(uint256 totalSupplyAmount, uint256 supplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -210,25 +157,16 @@ contract AgentTest is BaseTest {
         supplyAmount = bound(supplyAmount, 1, withdrawAmount - 1);
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         vm.expectRevert(bytes(ErrorsLib.DELTA_NON_ZERO));
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceByShares(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
+    function test_RebalanceByShares(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -236,27 +174,18 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, 0, withdrawShares, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, 0, withdrawShares, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
 
         withdrawShares = morpho.position(from_markets[0].market.id(), user).supplyShares;
         from_markets[0].shares = withdrawShares;
 
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
-
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
     function test_Rebalance(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -264,24 +193,15 @@ contract AgentTest is BaseTest {
         uint256 supplyAmount = totalSupplyAmount;
 
         (RebalanceMarketParams[] memory from_markets, RebalanceMarketParams[] memory to_markets) =
-            _prepareRebalanceMarketParms(0.9 ether, 0.8 ether, withdrawAmount, 0, supplyAmount, 0);
+            _prepareRebalanceMarketParams(lltv_90, lltv_80, withdrawAmount, 0, supplyAmount, 0);
 
         _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
-    function testRebalanceMultipleMarkets(uint256 totalSupplyAmount) public {
-        address user = address(0x1);
-        address rebalancer = address(0x2);
-
+    function test_RebalanceMultipleMarkets(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
         loanToken.setBalance(user, totalSupplyAmount);
 
@@ -292,10 +212,10 @@ contract AgentTest is BaseTest {
         supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
         uint256 supplyAmount2 = totalSupplyAmount - supplyAmount1;
 
-        MarketParams memory market1 = _createMarket(0.09 ether);
-        MarketParams memory market2 = _createMarket(0.08 ether);
-        MarketParams memory market3 = _createMarket(0.085 ether);
-        MarketParams memory market4 = _createMarket(0.07 ether);
+        MarketParams memory market1 = _createAndEnableMarket(user, 0.9e18);
+        MarketParams memory market2 = _createAndEnableMarket(user, 0.8e18);
+        MarketParams memory market3 = _createAndEnableMarket(user, 0.85e18);
+        MarketParams memory market4 = _createAndEnableMarket(user, 0.7e18);
 
         RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](2);
         RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](2);
@@ -307,12 +227,6 @@ contract AgentTest is BaseTest {
 
         _supplyMorpho(market1, withdrawAmount1, 0, user);
         _supplyMorpho(market2, withdrawAmount2, 0, user);
-
-        _setAuthorization(user, address(agent), true);
-
-        vm.startPrank(user);
-        agent.authorize(rebalancer);
-        vm.stopPrank();
 
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);

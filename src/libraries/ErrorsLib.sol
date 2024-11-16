@@ -20,4 +20,7 @@ library ErrorsLib {
 
     /// @notice Thrown when the delta is non-zero.
     string internal constant DELTA_NON_ZERO = "delta non-zero";
+
+    /// @notice Thrown when marketID not enabled by user
+    string internal constant NOT_ENABLED = "not-enabled";
 }

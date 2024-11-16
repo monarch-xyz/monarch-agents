@@ -2,7 +2,8 @@
 pragma solidity ^0.8.18;
 
 import {IMonarchAgent, RebalanceMarketParams} from "../interfaces/IMonarchAgent.sol";
-import {IMorpho} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IMorpho, Id, MarketParams} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 
@@ -12,6 +13,7 @@ import {ErrorsLib} from "../libraries/ErrorsLib.sol";
  */
 contract MonarchAgentV1 is IMonarchAgent {
     using SafeTransferLib for ERC20;
+    using MarketParamsLib for MarketParams;
 
     /* IMMUTABLES */
 
@@ -20,6 +22,9 @@ contract MonarchAgentV1 is IMonarchAgent {
 
     /// @notice only rebalancers can rebalance users' positions on their behalf
     mapping(address user => address rebalancer) public rebalancers;
+
+    /// @notice rebalancers can only rebalance to enabled market
+    mapping(address user => mapping(bytes32 marketId => bool)) marketEnabled;
 
     /* CONSTRUCTOR */
 
@@ -58,7 +63,20 @@ contract MonarchAgentV1 is IMonarchAgent {
     }
 
     /**
-     * @notice Rebalances the user's position from one set of markets to another
+     * @notice enable rebalancers to rebalance to specific market ids
+     * @param marketIds array of market id
+     * @param enabled bool for enable
+     */
+    function batchEnableMarkets(bytes32[] calldata marketIds, bool enabled) external {
+        for (uint256 i; i < marketIds.length; i++) {
+            marketEnabled[msg.sender][marketIds[i]] = enabled;
+
+            emit MarketEnabled(msg.sender, marketIds[i], enabled);
+        }
+    }
+
+    /**
+     * @notice Rebalance the user's position from one set of markets to another
      * @param onBehalf The user to rebalance the position for
      * @param token The token to rebalance
      * @param fromMarkets The markets to withdraw assets from
@@ -85,6 +103,10 @@ contract MonarchAgentV1 is IMonarchAgent {
 
         for (uint256 i; i < toMarkets.length; ++i) {
             require(toMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
+
+            bytes32 marketId = Id.unwrap(toMarkets[i].market.id());
+            require(marketEnabled[onBehalf][marketId], ErrorsLib.NOT_ENABLED);
+
             (uint256 assetsSupplied,) =
                 morphoBlue.supply(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf, bytes(""));
             tokenDelta -= int256(assetsSupplied);
