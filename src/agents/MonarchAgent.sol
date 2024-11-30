@@ -113,6 +113,8 @@ contract MonarchAgentV1 is IMonarchAgent {
         }
 
         require(tokenDelta == 0, ErrorsLib.DELTA_NON_ZERO);
+
+        emit Rebalance(onBehalf, token, fromMarkets, toMarkets);
     }
 
     /// @dev Gives the max approval to spender to spend the given asset if not already approved.
