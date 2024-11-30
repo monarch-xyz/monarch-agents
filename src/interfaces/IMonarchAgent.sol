@@ -17,7 +17,9 @@ interface IMonarchAgent {
     event MarketEnabled(address indexed user, bytes32 indexed marketId, bool enabled);
 
     /// @notice Emitted when a rebalancing operation is performed
-    event Rebalance(address indexed user, address indexed token, RebalanceMarketParams[] fromMarkets, RebalanceMarketParams[] toMarkets);
+    event Rebalance(
+        address indexed user, address indexed token, RebalanceMarketParams[] fromMarkets, RebalanceMarketParams[] toMarkets
+    );
 
     /// @notice Authorizes a rebalancer address to perform rebalancing operations on behalf of the caller
     /// @param rebalancer The address to be authorized as a rebalancer
