@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import {IMonarchAgent, RebalanceMarketParams} from "../interfaces/IMonarchAgent.sol";
-import {IMorpho, Id, MarketParams} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IMorpho, Id, MarketParams, Position} from "morpho-blue/src/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
@@ -24,7 +24,7 @@ contract MonarchAgentV1 is IMonarchAgent {
     mapping(address user => address rebalancer) public rebalancers;
 
     /// @notice rebalancers can only rebalance to enabled market
-    mapping(address user => mapping(bytes32 marketId => bool)) marketEnabled;
+    mapping(address user => mapping(bytes32 marketId => uint256 cap)) public marketCap;
 
     /* CONSTRUCTOR */
 
@@ -65,13 +65,14 @@ contract MonarchAgentV1 is IMonarchAgent {
     /**
      * @notice enable rebalancers to rebalance to specific market ids
      * @param marketIds array of market id
-     * @param enabled bool for enable
+     * @param caps array of market cap
      */
-    function batchEnableMarkets(bytes32[] calldata marketIds, bool enabled) external {
+    function batchConfigMarkets(bytes32[] calldata marketIds, uint256[] calldata caps) external {
+        require(marketIds.length == caps.length, ErrorsLib.INVALID_LENGTH);
         for (uint256 i; i < marketIds.length; i++) {
-            marketEnabled[msg.sender][marketIds[i]] = enabled;
+            marketCap[msg.sender][marketIds[i]] = caps[i];
 
-            emit MarketEnabled(msg.sender, marketIds[i], enabled);
+            emit MarketConfigured(msg.sender, marketIds[i], caps[i]);
         }
     }
 
@@ -104,11 +105,7 @@ contract MonarchAgentV1 is IMonarchAgent {
         for (uint256 i; i < toMarkets.length; ++i) {
             require(toMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
 
-            bytes32 marketId = Id.unwrap(toMarkets[i].market.id());
-            require(marketEnabled[onBehalf][marketId], ErrorsLib.NOT_ENABLED);
-
-            (uint256 assetsSupplied,) =
-                morphoBlue.supply(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf, bytes(""));
+            uint256 assetsSupplied = _supplyAndCheckCap(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf);
             tokenDelta -= int256(assetsSupplied);
         }
 
@@ -123,5 +120,23 @@ contract MonarchAgentV1 is IMonarchAgent {
         if (ERC20(asset).allowance(address(this), spender) == 0) {
             ERC20(asset).safeApprove(spender, type(uint256).max);
         }
+    }
+
+    /// @dev supply asset on behalf of user and check if the cap is exceeded
+    /// @dev returns total assets supplied
+    function _supplyAndCheckCap(MarketParams memory market, uint256 assets, uint256 shares, address onBehalf)
+        internal
+        returns (uint256 assetsSupplied)
+    {
+        Id marketId = market.id();
+
+        uint256 sharesSupplied;
+        (assetsSupplied, sharesSupplied) = morphoBlue.supply(market, assets, shares, onBehalf, bytes(""));
+
+        // the final supplied asset cannot exceed the cap if set
+        Position memory position = morphoBlue.position(marketId, onBehalf);
+        uint256 totalSupplyAssets = position.supplyShares * assetsSupplied / sharesSupplied;
+
+        require(marketCap[onBehalf][Id.unwrap(marketId)] >= totalSupplyAssets, ErrorsLib.CAP_EXCEEDED);
     }
 }
