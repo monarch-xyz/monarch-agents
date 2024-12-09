@@ -14,7 +14,7 @@ interface IMonarchAgent {
     event RebalancerSet(address indexed user, address indexed rebalancer);
 
     /// @notice Emitted when a market is enabled for a user
-    event MarketEnabled(address indexed user, bytes32 indexed marketId, bool enabled);
+    event MarketConfigured(address indexed user, bytes32 indexed marketId, uint256 cap);
 
     /// @notice Emitted when a rebalancing operation is performed
     event Rebalance(

@@ -127,7 +127,7 @@ contract AgentRebalanceTest is AgentTestBase {
 
         vm.prank(rebalancer);
 
-        vm.expectRevert(bytes(ErrorsLib.NOT_ENABLED));
+        vm.expectRevert(bytes(ErrorsLib.CAP_EXCEEDED));
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 

@@ -23,4 +23,10 @@ library ErrorsLib {
 
     /// @notice Thrown when marketID not enabled by user
     string internal constant NOT_ENABLED = "not-enabled";
+
+    /// @notice Thrown when the length of the array is invalid.
+    string internal constant INVALID_LENGTH = "invalid length";
+
+    /// @notice Thrown when the cap is exceeded.
+    string internal constant CAP_EXCEEDED = "cap exceeded";
 }

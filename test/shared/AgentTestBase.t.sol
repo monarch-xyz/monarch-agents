@@ -24,8 +24,10 @@ contract AgentTestBase is BaseTest {
         vm.prank(user);
         bytes32 marketId = Id.unwrap(market.id());
         bytes32[] memory markets = new bytes32[](1);
+        uint256[] memory caps = new uint256[](1);
         markets[0] = marketId;
-        agent.batchEnableMarkets(markets, true);
+        caps[0] = type(uint256).max;
+        agent.batchConfigMarkets(markets, caps);
         vm.stopPrank();
     }
 
