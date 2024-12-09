@@ -212,8 +212,10 @@ contract AgentRebalanceTest is AgentTestBase {
         supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
         uint256 supplyAmount2 = totalSupplyAmount - supplyAmount1;
 
-        MarketParams memory market1 = _createAndEnableMarket(user, 0.9e18);
-        MarketParams memory market2 = _createAndEnableMarket(user, 0.8e18);
+        MarketParams memory market1 = _createMarket(0.9e18);
+        MarketParams memory market2 = _createMarket(0.8e18);
+
+        // create + set maximize cap
         MarketParams memory market3 = _createAndEnableMarket(user, 0.85e18);
         MarketParams memory market4 = _createAndEnableMarket(user, 0.7e18);
 
@@ -229,6 +231,29 @@ contract AgentRebalanceTest is AgentTestBase {
         _supplyMorpho(market2, withdrawAmount2, 0, user);
 
         vm.prank(rebalancer);
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
+    function test_RevertIf_RebalanceCapExceeded(uint256 totalSupplyAmount) public {
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000_000000);
+        loanToken.setBalance(user, totalSupplyAmount);
+
+        MarketParams memory market1 = _createMarket(0.9e18);
+        MarketParams memory market2 = _createMarket(0.8e18);
+
+        // only allow half of the total supply to be supplied to market2
+        _setMarketCap(user, market2, totalSupplyAmount / 2);
+
+        RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](1);
+        RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](1);
+
+        from_markets[0] = RebalanceMarketParams(market1, totalSupplyAmount, 0);
+        to_markets[0] = RebalanceMarketParams(market2, totalSupplyAmount, 0);
+
+        _supplyMorpho(market1, totalSupplyAmount, 0, user);
+
+        vm.prank(rebalancer);
+        vm.expectRevert(bytes(ErrorsLib.CAP_EXCEEDED));
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 }

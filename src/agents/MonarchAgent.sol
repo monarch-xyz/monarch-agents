@@ -105,8 +105,7 @@ contract MonarchAgentV1 is IMonarchAgent {
         for (uint256 i; i < toMarkets.length; ++i) {
             require(toMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
 
-            (uint256 assetsSupplied,) =
-                _supplyAndCheckCap(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf);
+            uint256 assetsSupplied = _supplyAndCheckCap(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf);
             tokenDelta -= int256(assetsSupplied);
         }
 
@@ -124,12 +123,14 @@ contract MonarchAgentV1 is IMonarchAgent {
     }
 
     /// @dev supply asset on behalf of user and check if the cap is exceeded
+    /// @dev returns total assets supplied
     function _supplyAndCheckCap(MarketParams memory market, uint256 assets, uint256 shares, address onBehalf)
         internal
-        returns (uint256 assetsSupplied, uint256 sharesSupplied)
+        returns (uint256 assetsSupplied)
     {
         Id marketId = market.id();
 
+        uint256 sharesSupplied;
         (assetsSupplied, sharesSupplied) = morphoBlue.supply(market, assets, shares, onBehalf, bytes(""));
 
         // the final supplied asset cannot exceed the cap if set

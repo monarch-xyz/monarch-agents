@@ -21,14 +21,7 @@ contract AgentTestBase is BaseTest {
     }
 
     function _enableMarket(address user, MarketParams memory market) internal {
-        vm.prank(user);
-        bytes32 marketId = Id.unwrap(market.id());
-        bytes32[] memory markets = new bytes32[](1);
-        uint256[] memory caps = new uint256[](1);
-        markets[0] = marketId;
-        caps[0] = type(uint256).max;
-        agent.batchConfigMarkets(markets, caps);
-        vm.stopPrank();
+        _setMarketCap(user, market, type(uint256).max);
     }
 
     function _createMarket(uint256 lltv) internal returns (MarketParams memory) {
@@ -39,6 +32,17 @@ contract AgentTestBase is BaseTest {
     function _createAndEnableMarket(address user, uint256 lltv) internal returns (MarketParams memory market) {
         market = _createMarket(lltv);
         _enableMarket(user, market);
+    }
+
+    function _setMarketCap(address user, MarketParams memory market, uint256 cap) internal {
+        vm.startPrank(user);
+        bytes32 marketId = Id.unwrap(market.id());
+        bytes32[] memory markets = new bytes32[](1);
+        uint256[] memory caps = new uint256[](1);
+        markets[0] = marketId;
+        caps[0] = cap;
+        agent.batchConfigMarkets(markets, caps);
+        vm.stopPrank();
     }
 
     function _supplyMorpho(MarketParams memory market, uint256 assets, uint256 shares, address user) internal {
