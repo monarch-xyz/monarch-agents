@@ -24,7 +24,7 @@ contract MonarchAgentV1 is IMonarchAgent {
     mapping(address user => address rebalancer) public rebalancers;
 
     /// @notice rebalancers can only rebalance to enabled market
-    mapping(address user => mapping(bytes32 marketId => uint256 cap)) marketCap;
+    mapping(address user => mapping(bytes32 marketId => uint256 cap)) public marketCap;
 
     /* CONSTRUCTOR */
 
