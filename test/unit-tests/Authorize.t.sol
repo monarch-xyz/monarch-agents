@@ -2,6 +2,8 @@
 pragma solidity ^0.8.18;
 
 import {AgentTestBase} from "test/shared/AgentTestBase.t.sol";
+import {SigUtils} from "morpho-blue/test/forge/helpers/SigUtils.sol";
+import {Authorization, Signature} from "morpho-blue/src/interfaces/IMorpho.sol";
 
 contract AgentAuthorizeTest is AgentTestBase {
     function setUp() public override {
@@ -28,5 +30,30 @@ contract AgentAuthorizeTest is AgentTestBase {
 
         vm.stopPrank();
         assertEq(agent.rebalancers(user), address(0));
+    }
+
+    function test_SetMorphoAuth() public {
+        // setup a new user
+        uint privateKey = 0xBEEF;
+        address user = vm.addr(privateKey);
+
+        // set authorization and sign the signature
+        Authorization memory authorization;
+
+        authorization.authorizer = user;
+        authorization.authorized = address(agent);
+        authorization.isAuthorized = true;
+        authorization.deadline = block.timestamp + 86400;
+        authorization.nonce = 0;
+
+        Signature memory sig;
+        bytes32 digest = SigUtils.getTypedDataHash(morpho.DOMAIN_SEPARATOR(), authorization);
+        (sig.v, sig.r, sig.s) = vm.sign(privateKey, digest);
+
+        vm.startPrank(user);
+        agent.setMorphoAuthorization(authorization, sig);
+        vm.stopPrank();
+
+        assertEq(morpho.isAuthorized(user, address(agent)), true);
     }
 }

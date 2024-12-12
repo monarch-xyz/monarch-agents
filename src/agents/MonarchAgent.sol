@@ -2,16 +2,17 @@
 pragma solidity ^0.8.18;
 
 import {IMonarchAgent, RebalanceMarketParams} from "../interfaces/IMonarchAgent.sol";
-import {IMorpho, Id, MarketParams, Position} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IMorpho, Id, MarketParams, Position, Signature, Authorization} from "morpho-blue/src/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SafeTransferLib, ERC20} from "solmate/src/utils/SafeTransferLib.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
+import {Multicall} from "openzeppelin/utils/Multicall.sol";
 
 /**
  * @title MonarchAgent
  * @notice MonarchAgent is a contract designed to work for Morpho Blue
  */
-contract MonarchAgentV1 is IMonarchAgent {
+contract MonarchAgentV1 is IMonarchAgent, Multicall {
     using SafeTransferLib for ERC20;
     using MarketParamsLib for MarketParams;
 
@@ -60,6 +61,16 @@ contract MonarchAgentV1 is IMonarchAgent {
         delete rebalancers[msg.sender];
 
         emit RebalancerSet(msg.sender, address(0));
+    }
+
+    /**
+     * @notice Authorize this contract to manage a user's position on MorphoBlue with signature
+     * @dev The function is added here for batched setup. All verification is done in Morpho.sol
+     * @param authorization The `Authorization` struct.
+     * @param signature The signature.
+     */
+    function setMorphoAuthorization(Authorization calldata authorization, Signature calldata signature) external {  
+        morphoBlue.setAuthorizationWithSig(authorization, signature);
     }
 
     /**
