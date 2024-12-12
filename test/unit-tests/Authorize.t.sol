@@ -34,7 +34,7 @@ contract AgentAuthorizeTest is AgentTestBase {
 
     function test_SetMorphoAuth() public {
         // setup a new user
-        uint privateKey = 0xBEEF;
+        uint256 privateKey = 0xBEEF;
         address user = vm.addr(privateKey);
 
         // set authorization and sign the signature

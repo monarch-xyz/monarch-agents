@@ -69,7 +69,7 @@ contract MonarchAgentV1 is IMonarchAgent, Multicall {
      * @param authorization The `Authorization` struct.
      * @param signature The signature.
      */
-    function setMorphoAuthorization(Authorization calldata authorization, Signature calldata signature) external {  
+    function setMorphoAuthorization(Authorization calldata authorization, Signature calldata signature) external {
         morphoBlue.setAuthorizationWithSig(authorization, signature);
     }
 

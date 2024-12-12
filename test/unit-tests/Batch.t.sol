@@ -12,7 +12,7 @@ contract BatchSetupTest is AgentTestBase {
 
     function test_BatchSetup() public {
         // setup a new user
-        uint privateKey = 0xBEEF;
+        uint256 privateKey = 0xBEEF;
         address user = vm.addr(privateKey);
         address rebalancer = address(0x2);
 
@@ -43,7 +43,7 @@ contract BatchSetupTest is AgentTestBase {
         assertEq(agent.marketCap(user, marketId), caps[0]);
     }
 
-    function _signMorphoAuthorization(uint pk) internal returns (Authorization memory authorization, Signature memory sig) {
+    function _signMorphoAuthorization(uint256 pk) internal returns (Authorization memory authorization, Signature memory sig) {
         // setup user
         address user = vm.addr(pk);
 
