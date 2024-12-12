@@ -4,6 +4,8 @@
   "exclude_informational": true,
   "exclude_low": true,
   "solc_remaps": [
-    "morpho-blue=lib/morpho-blue"
+    "morpho-blue=lib/morpho-blue",
+    "openzeppelin=lib/openzeppelin-contracts/contracts",
+    "solmate=lib/solmate/"
   ]
 }
