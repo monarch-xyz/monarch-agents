@@ -102,13 +102,13 @@ contract MonarchAgentV1 is IMonarchAgent, Multicall {
     ) external payable onlyRebalancer(onBehalf) {
         require(fromMarkets.length > 0 && toMarkets.length > 0, ErrorsLib.ZERO_MARKET);
 
-        int256 tokenDelta;
+        uint256 tokenDelta;
 
         for (uint256 i; i < fromMarkets.length; ++i) {
             require(fromMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
             (uint256 assetsWithdrawn,) =
                 morphoBlue.withdraw(fromMarkets[i].market, fromMarkets[i].assets, fromMarkets[i].shares, onBehalf, address(this));
-            tokenDelta += int256(assetsWithdrawn);
+            tokenDelta += assetsWithdrawn;
         }
 
         _approveMaxTo(token, address(morphoBlue));
@@ -116,8 +116,11 @@ contract MonarchAgentV1 is IMonarchAgent, Multicall {
         for (uint256 i; i < toMarkets.length; ++i) {
             require(toMarkets[i].market.loanToken == token, ErrorsLib.INVALID_TOKEN);
 
-            uint256 assetsSupplied = _supplyAndCheckCap(toMarkets[i].market, toMarkets[i].assets, toMarkets[i].shares, onBehalf);
-            tokenDelta -= int256(assetsSupplied);
+            // It might be hard to calculate exactly how much amount should be specified due to interest, So we allow putting max(uin256)
+            // to put in all remaining delta.
+            uint256 assetsToUse = toMarkets[i].assets == type(uint256).max ? tokenDelta : toMarkets[i].assets;
+            uint256 assetsSupplied = _supplyAndCheckCap(toMarkets[i].market, assetsToUse, toMarkets[i].shares, onBehalf);
+            tokenDelta -= assetsSupplied;
         }
 
         require(tokenDelta == 0, ErrorsLib.DELTA_NON_ZERO);
