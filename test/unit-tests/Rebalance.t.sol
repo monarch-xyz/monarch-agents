@@ -243,7 +243,6 @@ contract AgentRebalanceTest is AgentTestBase {
 
         uint256 supplyAmount1;
         supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
-        uint256 supplyAmount2 = totalSupplyAmount - supplyAmount1;
 
         MarketParams memory market1 = _createMarket(0.9e18);
         MarketParams memory market2 = _createMarket(0.8e18);
