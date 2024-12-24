@@ -234,6 +234,36 @@ contract AgentRebalanceTest is AgentTestBase {
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
+    function test_RebalanceMultipleMarkets_WithMaxUintAmount(uint256 totalSupplyAmount) public {
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
+        loanToken.setBalance(user, totalSupplyAmount);
+
+        uint256 withdrawAmount1 = totalSupplyAmount / 2;
+        uint256 withdrawAmount2 = totalSupplyAmount - withdrawAmount1;
+
+        uint256 supplyAmount1;
+        supplyAmount1 = bound(supplyAmount1, 1, totalSupplyAmount - 1);
+
+        MarketParams memory market1 = _createMarket(0.9e18);
+        MarketParams memory market2 = _createMarket(0.8e18);
+
+        // create + set maximize cap
+        MarketParams memory market3 = _createAndEnableMarket(user, 0.85e18);
+
+        RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](2);
+        RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](1);
+
+        from_markets[0] = RebalanceMarketParams(market1, withdrawAmount1, 0);
+        from_markets[1] = RebalanceMarketParams(market2, withdrawAmount2, 0);
+        to_markets[0] = RebalanceMarketParams(market3, type(uint256).max, 0);
+
+        _supplyMorpho(market1, withdrawAmount1, 0, user);
+        _supplyMorpho(market2, withdrawAmount2, 0, user);
+
+        vm.prank(rebalancer);
+        agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
     function test_RevertIf_RebalanceCapExceeded(uint256 totalSupplyAmount) public {
         totalSupplyAmount = bound(totalSupplyAmount, 2, 1000_000000);
         loanToken.setBalance(user, totalSupplyAmount);
