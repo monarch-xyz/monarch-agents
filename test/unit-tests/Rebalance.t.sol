@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {MarketParams, RebalanceMarketParams} from "../../src/interfaces/IMonarchAgent.sol";
 import {ErrorsLib} from "../../src/libraries/ErrorsLib.sol";
-import {AgentTestBase} from "test/shared/AgentTestBase.t.sol";
+import {AgentTestBase, FakeAgent} from "test/shared/AgentTestBase.t.sol";
 
 contract AgentRebalanceTest is AgentTestBase {
     using MarketParamsLib for MarketParams;
@@ -199,6 +199,38 @@ contract AgentRebalanceTest is AgentTestBase {
 
         vm.prank(rebalancer);
         agent.rebalance(user, address(loanToken), from_markets, to_markets);
+    }
+
+    function test_RebalanceApprovalDepleted(uint256 totalSupplyAmount) public {
+        FakeAgent fakeAgent = new FakeAgent(address(morpho));
+        vm.startPrank(user);
+        morpho.setAuthorization(address(fakeAgent), true);
+        fakeAgent.authorize(rebalancer);
+        vm.stopPrank();
+
+        totalSupplyAmount = bound(totalSupplyAmount, 2, 1000);
+        loanToken.setBalance(user, totalSupplyAmount);
+
+        uint256 withdrawAmount = totalSupplyAmount;
+        uint256 supplyAmount = totalSupplyAmount;
+
+        uint256 lltv1 = lltv_90;
+        uint256 lltv2 = lltv_80;
+
+        MarketParams memory market1 = _createAndEnableMarketFake(user, lltv1, address(fakeAgent));
+        MarketParams memory market2 = _createAndEnableMarketFake(user, lltv2, address(fakeAgent));
+
+        RebalanceMarketParams[] memory from_markets = new RebalanceMarketParams[](1);
+        RebalanceMarketParams[] memory to_markets = new RebalanceMarketParams[](1);
+        from_markets[0] = RebalanceMarketParams(market1, withdrawAmount, 0);
+        to_markets[0] = RebalanceMarketParams(market2, supplyAmount, 0);
+
+        _supplyMorpho(from_markets[0].market, totalSupplyAmount, 0, user);
+
+        fakeAgent.approve(address(loanToken), address(morpho));
+        vm.prank(rebalancer);
+        vm.expectRevert();
+        fakeAgent.rebalance(user, address(loanToken), from_markets, to_markets);
     }
 
     function test_RebalanceMultipleMarkets(uint256 totalSupplyAmount) public {
