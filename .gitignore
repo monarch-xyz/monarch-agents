@@ -13,4 +13,7 @@ out/
 # Coverage
 lcov.info
 
+# Medusa reports
+crytic-export
+
 .vscode/
