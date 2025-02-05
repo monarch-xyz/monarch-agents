@@ -36,3 +36,19 @@ $ forge test
 ```shell
 $ forge fmt
 ```
+
+### Security Tools
+
+#### Slither Analyzer
+
+```shell
+brew install slither-analyzer
+slither <target-contract>
+```
+
+#### Medusa Fuzzing Test
+
+```shell
+brew install medusa
+medusa fuzz
+```
